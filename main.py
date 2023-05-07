@@ -13,7 +13,7 @@ screen = pygame.display.set_mode([SCREEN_WIDTH, SCREEN_HEIGHT])
 
 # Change Caption and Image
 pygame.display.set_caption("Shooter")
-pygame_icon = pygame.image.load("amongus.png")
+pygame_icon = pygame.image.load("images/amongus.png")
 pygame.display.set_icon(pygame_icon)
 
 # clock
