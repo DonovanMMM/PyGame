@@ -3,6 +3,7 @@ from sys import exit
 import os
 import random
 import time
+import csv
 
 # Start Window
 pygame.init()
@@ -21,13 +22,24 @@ clock = pygame.time.Clock()
 FPS = 60
 
 GRAVITY = .75
-TILE_SIZE = 40
+ROWS = 16
+COLUMNS = 150
+TILE_SIZE = SCREEN_HEIGHT // ROWS
+TILE_TYPES = 21
+
+level = 0
 
 moving_left = False
 moving_right = False
 shoot = False
 grenade = False
 grenade_thrown = False
+
+image_list = []
+for x in range(TILE_TYPES):
+    image = pygame.image.load(f"images/assets/{x}.png").convert_alpha()
+    image = pygame.transform.scale(image, (TILE_SIZE, TILE_SIZE))
+    image_list.append(image)
 
 bullet_img = pygame.image.load("images/icons/bullet2.png").convert_alpha()
 grenade_img = pygame.image.load("images/icons/grenade.png").convert_alpha()
@@ -235,6 +247,46 @@ class Soldier(pygame.sprite.Sprite):
         screen.blit(pygame.transform.flip(self.image, self.flip, False), self.rect)
 
 
+class World():
+    def __init__(self):
+        self.obstacle_list = []
+
+    def process_data(self, data):
+        for y, row in enumerate(data):
+            for x, tile in enumerate(row):
+                if tile >= 0:
+                    image = image_list[tile]
+                    img_rect = image.get_rect()
+                    img_rect.x = x * TILE_SIZE
+                    img_rect.y = y * TILE_SIZE
+                    tile_data = (image, img_rect)
+                    if 0 <= tile <= 8:
+                        self.obstacle_list.append(tile_data)
+                    elif 9 <= tile <= 10:
+                        pass
+                    elif 11 <= tile <= 14:
+                        pass
+                    elif tile == 15:
+                        player = Soldier("/joe", int(x * TILE_SIZE), int(y * TILE_SIZE), .175, 3, 20, 10, 10, 100, 50)
+                        health_bar = HealthBar(10, 10, player.health, player.health)
+                        shield_bar = ShieldBar(10, 10, player.shield, player.max_shield)
+                    elif tile == 16:
+                        enemy = Soldier("/donald", 300, 350, .2, 2, 200, 20, 0, 100, 0)
+                        enemy_group.add(enemy)
+                    elif tile == 17:
+                        item_box = ItemBox("Ammo", int(x * TILE_SIZE), int(y * TILE_SIZE))
+                        item_box_group.add(item_box)
+                    elif tile == 18:
+                        item_box = ItemBox("Grenade", int(x * TILE_SIZE), int(y * TILE_SIZE))
+                        item_box_group.add(item_box)
+                    elif tile == 19:
+                        item_box = ItemBox("Health", int(x * TILE_SIZE), int(y * TILE_SIZE))
+                        item_box_group.add(item_box)
+                    elif tile == 20:
+                        pass
+        return player, health_bar, shield_bar
+
+
 class ItemBox(pygame.sprite.Sprite):
     def __init__(self, item_type, x, y):
         pygame.sprite.Sprite.__init__(self)
@@ -415,20 +467,18 @@ grenade_group = pygame.sprite.Group()
 explosion_group = pygame.sprite.Group()
 item_box_group = pygame.sprite.Group()
 
-item_box = ItemBox("Health", 100, 365)
-item_box_group.add(item_box)
-item_box = ItemBox("Ammo", 400, 365)
-item_box_group.add(item_box)
-item_box = ItemBox("Grenade", 500, 365)
-item_box_group.add(item_box)
 
-player = Soldier("/joe", 200, 200, .175, 3, 20, 10, 10, 100, 50)
-health_bar = HealthBar(10, 10, player.health, player.health)
-shield_bar = ShieldBar(10, 10, player.shield, player.max_shield)
-enemy = Soldier("/donald", 300, 350, .2, 2, 200, 20, 0, 100, 0)
-enemy2 = Soldier("/donald", 700, 350, .2, 2, 200, 20, 0, 100, 0)
-enemy_group.add(enemy)
-enemy_group.add(enemy2)
+world_data = []
+for row in range(ROWS):
+    r = [-1] * COLUMNS
+    world_data.append(r)
+with open(f'level{level}_data.csv', newline="") as csvfile:
+    reader = csv.reader(csvfile, delimiter=",")
+    for x, row in enumerate(reader):
+        for y, tile in enumerate(row):
+            world_data[x][y] = int(tile)
+world = World()
+player, health_bar, shield_bar = world.process_data(world_data)
 
 while True:
     clock.tick(FPS)
