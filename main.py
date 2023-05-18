@@ -206,11 +206,13 @@ class Soldier(pygame.sprite.Sprite):
 
         if pygame.sprite.spritecollide(self, water_group, False):
             self.health = 0
+            self.shield = 0
         complete = False
         if pygame.sprite.spritecollide(self, exit_group, False):
             complete = True
         if self.rect.bottom > SCREEN_HEIGHT:
             self.health = 0
+            self.shield = 0
 
         if self.character_type == "/joe":
             if self.rect.left + dx < 0 or self.rect.right + dx > SCREEN_WIDTH:
